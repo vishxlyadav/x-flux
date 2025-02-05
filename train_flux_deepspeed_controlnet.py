@@ -37,7 +37,7 @@ from einops import rearrange
 from src.flux.sampling import denoise, get_noise, get_schedule, prepare, unpack
 from src.flux.util import (configs, load_ae, load_clip,
                        load_flow_model2, load_controlnet, load_t5)
-from image_datasets.canny_dataset import loader
+from image_datasets.ie_dataset import loader
 if is_wandb_available():
     import wandb
 logger = get_logger(__name__, log_level="INFO")
@@ -222,7 +222,7 @@ def main():
                 print(t.shape, x_1.shape, x_0.shape)
                 x_t = (1 - t.unsqueeze(1).unsqueeze(2).repeat(1, x_1.shape[1], x_1.shape[2])) * x_1 + t.unsqueeze(1).unsqueeze(2).repeat(1, x_1.shape[1], x_1.shape[2]) * x_0
                 bsz = x_1.shape[0]
-                guidance_vec = torch.full((x_t.shape[0],), 4, device=x_t.device, dtype=x_t.dtype)
+                guidance_vec = torch.full((x_t.shape[0],), 0, device=x_t.device, dtype=x_t.dtype)
 
                 block_res_samples = controlnet(
                     img=x_t.to(weight_dtype),
