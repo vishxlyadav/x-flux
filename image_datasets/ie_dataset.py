@@ -18,15 +18,26 @@ import cv2
 #     bottom = (height + new_size) / 2
 #     return image.crop((left, top, right, bottom))
 
-def aspect_resize(image, max_length):
+def aspect_resize_with_padding(image, max_length):
     width, height = image.size
     if width > height:
         ratio = max_length / width
     else:
         ratio = max_length / height
+    
     new_width = int(width * ratio)
     new_height = int(height * ratio)
-    return image.resize((new_width, new_height))
+    resized_image = image.resize((new_width, new_height), Image.LANCZOS)
+    
+    # Create a new black square canvas
+    new_image = Image.new("RGB", (max_length, max_length), (0, 0, 0))
+    
+    # Paste the resized image at the center
+    paste_x = (max_length - new_width) // 2
+    paste_y = (max_length - new_height) // 2
+    new_image.paste(resized_image, (paste_x, paste_y))
+    
+    return new_image
 
 class CustomImageDataset(Dataset):
     def __init__(self, img_dir, img_size=512, prompt=""):
@@ -48,12 +59,12 @@ class CustomImageDataset(Dataset):
     def __getitem__(self, idx):
         try:
             input_img = Image.open(self.input_images[idx])
-            input_img = aspect_resize(input_img, self.img_size)
+            input_img = aspect_resize_with_padding(input_img, self.img_size)
             input_img = torch.from_numpy((np.array(input_img) / 127.5) - 1)
             input_img = input_img.permute(2, 0, 1)
 
             target_img = Image.open(self.target_images[idx])
-            target_img = aspect_resize(target_img, self.img_size)
+            target_img = aspect_resize_with_padding(target_img, self.img_size)
             target_img = torch.from_numpy((np.array(target_img) / 127.5) - 1)
             target_img = target_img.permute(2, 0, 1)
 
